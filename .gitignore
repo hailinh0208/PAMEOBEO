@@ -1,0 +1,12 @@
+target/
+*.iml
+.idea/
+.vscode/
+.DS_Store
+.keys/
+*.log
+jmeter/results/
+.run/
+
+# Ghi chú cá nhân, không đưa lên git
+docs/huong-dan-nguoi-moi.md

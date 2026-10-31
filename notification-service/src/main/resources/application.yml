@@ -1,0 +1,44 @@
+server:
+  port: 9004
+
+spring:
+  application:
+    name: notification-service
+  threads:
+    virtual:
+      enabled: true          # Java 21: Tomcat and Kafka listener threads become virtual threads
+  datasource:
+    url: jdbc:postgresql://localhost:5440/notification_db
+    username: pameobeo
+    password: ${DB_PASSWORD:pameobeo}
+  jpa:
+    open-in-view: false
+  flyway:
+    enabled: true
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+    consumer:
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+  mail:
+    host: ${SMTP_HOST:localhost}
+    port: ${SMTP_PORT:1025}
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: ${JWKS_URI:http://localhost:9001/.well-known/jwks.json}
+
+notification:
+  from: no-reply@pameobeo.vn
+  shop-email: shop@pameobeo.vn
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

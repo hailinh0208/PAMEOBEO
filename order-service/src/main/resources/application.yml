@@ -1,0 +1,71 @@
+server:
+  port: 9002
+
+spring:
+  application:
+    name: order-service
+  datasource:
+    url: jdbc:postgresql://localhost:5440/order_db
+    username: pameobeo
+    password: ${DB_PASSWORD:pameobeo}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  flyway:
+    enabled: true
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP:localhost:9092}
+    producer:
+      acks: all
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      properties:
+        enable.idempotence: true
+    consumer:
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: ${JWKS_URI:http://localhost:9001/.well-known/jwks.json}
+
+kitchen:
+  base-url: ${KITCHEN_URL:http://localhost:9003}
+  connect-timeout: 1s
+  read-timeout: ${KITCHEN_READ_TIMEOUT:2s}
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      kitchen:
+        register-health-indicator: true
+        event-consumer-buffer-size: 1000   # keep enough events for /actuator/circuitbreakerevents
+        sliding-window-type: COUNT_BASED
+        sliding-window-size: 20            # look at the last 20 calls
+        minimum-number-of-calls: 10        # need at least 10 calls before deciding
+        failure-rate-threshold: 50         # OPEN if >= 50% failed ...
+        slow-call-duration-threshold: 1s   # ... or a call slower than 1s counts as "slow"
+        slow-call-rate-threshold: 50       # ... or >= 50% were slow
+        wait-duration-in-open-state: 10s   # stay OPEN 10s, then HALF_OPEN
+        automatic-transition-from-open-to-half-open-enabled: true
+        permitted-number-of-calls-in-half-open-state: 5
+        record-exceptions:
+          - org.springframework.web.client.ResourceAccessException      # timeout, connection refused
+          - org.springframework.web.client.HttpServerErrorException     # 5xx
+        ignore-exceptions:
+          - org.springframework.web.client.HttpClientErrorException     # 4xx = business error, not an outage
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,circuitbreakers,circuitbreakerevents
+  endpoint:
+    health:
+      show-details: always
+  health:
+    circuitbreakers:
+      enabled: true

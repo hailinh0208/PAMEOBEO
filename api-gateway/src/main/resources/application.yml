@@ -1,0 +1,30 @@
+server:
+  port: 9000
+
+spring:
+  application:
+    name: api-gateway
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: ${JWKS_URI:http://localhost:9001/.well-known/jwks.json}
+  cloud:
+    gateway:
+      server:
+        webflux:
+          httpclient:
+            connect-timeout: 2000
+            response-timeout: 30s
+
+services:
+  auth: ${AUTH_URL:http://localhost:9001}
+  order: ${ORDER_URL:http://localhost:9002}
+  kitchen: ${KITCHEN_URL:http://localhost:9003}
+  notification: ${NOTIFICATION_URL:http://localhost:9004}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,gateway

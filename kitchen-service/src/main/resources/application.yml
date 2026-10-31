@@ -1,0 +1,53 @@
+server:
+  port: 9003
+  tomcat:
+    threads:
+      # Lower this (e.g. KITCHEN_MAX_THREADS=5) to reproduce a real overload for the Circuit Breaker demo
+      max: ${KITCHEN_MAX_THREADS:200}
+
+spring:
+  application:
+    name: kitchen-service
+  datasource:
+    url: jdbc:postgresql://localhost:5440/kitchen_db
+    username: pameobeo
+    password: ${DB_PASSWORD:pameobeo}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  flyway:
+    enabled: true
+  servlet:
+    multipart:
+      # product photos: the domain allows 2 MB (MenuItemImage.MAX_BYTES), with some margin for the multipart envelope
+      max-file-size: 3MB
+      max-request-size: 3MB
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP:localhost:9092}
+    producer:
+      acks: all
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      properties:
+        enable.idempotence: true
+    consumer:
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: ${JWKS_URI:http://localhost:9001/.well-known/jwks.json}
+
+kitchen:
+  default-capacity: ${DEFAULT_CAPACITY:50}
+  cutoff-time: "18:00"
+  zone: Asia/Ho_Chi_Minh
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
